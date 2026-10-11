@@ -1,0 +1,35 @@
+from django.utils import timezone
+from rest_framework import serializers
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+
+from .models import Attendance, User
+
+
+class LoginSerializer(TokenObtainPairSerializer):
+    """Login ചെയ്യുമ്പോൾ salesman ആണെങ്കിൽ attendance ഓട്ടോമാറ്റിക്."""
+
+    def validate(self, attrs):
+        data = super().validate(attrs)
+        user = self.user
+        if user.role == User.Role.SALESMAN:
+            Attendance.objects.get_or_create(
+                salesman=user, date=timezone.localdate()
+            )
+        data['user'] = {
+            'id': user.id,
+            'username': user.username,
+            'name': user.get_full_name() or user.username,
+            'role': 'admin' if user.is_admin_role else user.role,
+        }
+        return data
+
+
+class AttendanceSerializer(serializers.ModelSerializer):
+    salesman_name = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Attendance
+        fields = ['id', 'salesman', 'salesman_name', 'date', 'login_time']
+
+    def get_salesman_name(self, obj):
+        return obj.salesman.get_full_name() or obj.salesman.username
