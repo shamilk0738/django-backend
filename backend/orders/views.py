@@ -2,6 +2,7 @@ from django.db.models import Count, Sum
 from django.utils import timezone
 from django.utils.dateparse import parse_date
 from rest_framework import viewsets
+from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -9,7 +10,7 @@ from rest_framework.views import APIView
 from accounts.models import Attendance, User
 from accounts.permissions import IsAdminRole, IsSalesmanRole
 from .models import Order
-from .serializers import OrderSerializer, OrderStatusSerializer
+from .serializers import OrderEditSerializer, OrderSerializer, OrderStatusSerializer
 
 
 class OrderViewSet(viewsets.ModelViewSet):
@@ -20,6 +21,7 @@ class OrderViewSet(viewsets.ModelViewSet):
             return [IsSalesmanRole()]
         if self.action == 'partial_update':
             return [IsAdminRole()]
+        # list, retrieve, edit → login ചെയ്ത ആർക്കും (edit-ൽ role താഴെ പരിശോധിക്കുന്നു)
         return [IsAuthenticated()]
 
     def get_serializer_class(self):
@@ -42,6 +44,26 @@ class OrderViewSet(viewsets.ModelViewSet):
         if status:
             qs = qs.filter(status=status)
         return qs
+
+    @action(detail=True, methods=['patch'], url_path='edit')
+    def edit(self, request, pk=None):
+        """PATCH /api/orders/{id}/edit/ — pending order-ന്റെ items / notes മാറ്റാൻ."""
+        order = self.get_object()   # salesman-ന് സ്വന്തം orders മാത്രം, മറ്റുള്ളവ 404
+
+        user = request.user
+        if not (user.is_admin_role or user.role == 'salesman'):
+            return Response({'detail': 'ഇത് ചെയ്യാൻ അനുമതി ഇല്ല.'}, status=403)
+
+        if order.status != Order.Status.PENDING:
+            return Response(
+                {'status': ['Pending ആയ order മാത്രമേ edit ചെയ്യാൻ കഴിയൂ.']},
+                status=400)
+
+        serializer = OrderEditSerializer(order, data=request.data)
+        serializer.is_valid(raise_exception=True)
+        order = serializer.save()
+
+        return Response(OrderSerializer(order, context={'request': request}).data)
 
 
 def _date_param(request, name, default):

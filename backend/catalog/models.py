@@ -25,12 +25,15 @@ class Product(models.Model):
     name = models.CharField(max_length=150, help_text='eg: Pampers Large')
     description = models.TextField(blank=True)
     image = models.ImageField(upload_to='products/', null=True, blank=True)
+    mrp = models.DecimalField('MRP per piece', max_digits=10, decimal_places=2, default=0,
+                              help_text='Printed MRP per piece')
     price = models.DecimalField('Price per piece', max_digits=10, decimal_places=2)
     pieces_per_bag = models.PositiveIntegerField(default=1, help_text='ഒരു bag/pack-ൽ എത്ര piece')
     bag_price = models.DecimalField(
         max_digits=10, decimal_places=2, null=True, blank=True,
         help_text='ഒഴിച്ചിട്ടാൽ price x pieces per bag ഓട്ടോമാറ്റിക്',
     )
+    stock = models.PositiveIntegerField(default=0, help_text='Total stock in PIECES')
     is_active = models.BooleanField(default=True)
 
     class Meta:

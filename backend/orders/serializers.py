@@ -4,6 +4,8 @@ from django.db import transaction
 from django.utils import timezone
 from rest_framework import serializers
 
+from catalog.models import Product
+
 from .models import Order, OrderItem
 from .services import calculate_line
 
@@ -74,3 +76,40 @@ class OrderStatusSerializer(serializers.ModelSerializer):
     class Meta:
         model = Order
         fields = ['id', 'status']
+
+
+# ---------- Order edit ----------
+
+class EditItemSerializer(serializers.Serializer):
+    product = serializers.PrimaryKeyRelatedField(
+        queryset=Product.objects.filter(is_active=True))
+    unit = serializers.ChoiceField(choices=['bag', 'piece'])
+    quantity = serializers.IntegerField(min_value=1)
+
+
+class OrderEditSerializer(serializers.Serializer):
+    notes = serializers.CharField(required=False, allow_blank=True)
+    items = EditItemSerializer(many=True, allow_empty=False)
+
+    def update(self, order, validated_data):
+        today = timezone.localdate()
+        with transaction.atomic():
+            if 'notes' in validated_data:
+                order.notes = validated_data['notes']
+
+            order.items.all().delete()
+            total = Decimal('0.00')
+            for item in validated_data['items']:
+                rate, free, disc, line_total = calculate_line(
+                    item['product'], item['unit'], item['quantity'], today
+                )
+                OrderItem.objects.create(
+                    order=order, product=item['product'], unit=item['unit'],
+                    quantity=item['quantity'], unit_price=rate, free_quantity=free,
+                    discount_percent=disc, line_total=line_total,
+                )
+                total += line_total
+
+            order.total_amount = total
+            order.save()
+        return order

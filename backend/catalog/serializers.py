@@ -14,11 +14,22 @@ class ProductSerializer(serializers.ModelSerializer):
     brand_name = serializers.CharField(source='brand.name', read_only=True)
     bag_rate = serializers.DecimalField(max_digits=12, decimal_places=2, read_only=True)
     schemes = SchemeSerializer(many=True, read_only=True)
+    stock_bags = serializers.SerializerMethodField()
+    stock_pieces = serializers.SerializerMethodField()
 
     class Meta:
         model = Product
-        fields = ['id', 'brand', 'brand_name', 'name', 'description', 'image', 'price',
-                  'pieces_per_bag', 'bag_rate', 'schemes']
+        fields = ['id', 'brand', 'brand_name', 'name', 'description', 'image',
+                  'mrp', 'price', 'pieces_per_bag', 'bag_rate',
+                  'stock', 'stock_bags', 'stock_pieces', 'schemes']
+
+    def get_stock_bags(self, obj):
+        ppb = obj.pieces_per_bag or 0
+        return obj.stock // ppb if ppb > 0 else 0
+
+    def get_stock_pieces(self, obj):
+        ppb = obj.pieces_per_bag or 0
+        return obj.stock % ppb if ppb > 0 else obj.stock
 
 
 class BrandListSerializer(serializers.ModelSerializer):

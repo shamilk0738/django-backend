@@ -1,6 +1,7 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as DjangoUserAdmin
 from django.contrib.auth.forms import UserCreationForm
+from django.utils.html import format_html
 
 from .models import Attendance, Route, SalesmanProfile, User
 
@@ -17,6 +18,17 @@ class SalesmanProfileInline(admin.StackedInline):
     max_num = 1
     can_delete = False
     verbose_name_plural = 'Salesman details (role = Salesman ആണെങ്കിൽ മാത്രം പൂരിപ്പിക്കുക)'
+    fields = ('employee_code', 'route', 'address', 'monthly_target',
+              'photo', 'photo_preview')
+    readonly_fields = ('photo_preview',)
+
+    @admin.display(description='Preview')
+    def photo_preview(self, obj):
+        if obj and obj.photo:
+            return format_html(
+                '<img src="{}" style="height:90px;width:90px;'
+                'object-fit:cover;border-radius:50%;" />', obj.photo.url)
+        return '—'
 
 
 @admin.register(User)

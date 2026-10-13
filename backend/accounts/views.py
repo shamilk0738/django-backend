@@ -16,6 +16,11 @@ class MeView(APIView):
     def get(self, request):
         u = request.user
         profile = getattr(u, 'salesman_profile', None)
+
+        photo_url = None
+        if profile and profile.photo:
+            photo_url = request.build_absolute_uri(profile.photo.url)
+
         return Response({
             'id': u.id,
             'username': u.username,
@@ -23,6 +28,7 @@ class MeView(APIView):
             'role': 'admin' if u.is_admin_role else u.role,
             'phone': u.phone,
             'route': profile.route.name if profile and profile.route else None,
+            'photo': photo_url,
         })
 
 

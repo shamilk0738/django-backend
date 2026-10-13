@@ -6,7 +6,7 @@ from .models import Brand, Product, Scheme
 class ProductInline(admin.TabularInline):
     model = Product
     extra = 1
-    fields = ('name', 'price', 'pieces_per_bag', 'bag_price', 'is_active')
+    fields = ('name', 'mrp', 'price', 'pieces_per_bag', 'bag_price', 'stock', 'is_active')
     show_change_link = True      # scheme ചേർക്കാൻ product page തുറക്കാം
 
 
@@ -28,8 +28,9 @@ class BrandAdmin(admin.ModelAdmin):
 
 @admin.register(Product)
 class ProductAdmin(admin.ModelAdmin):
-    list_display = ('name', 'brand', 'price', 'pieces_per_bag', 'bag_rate', 'is_active')
+    list_display = ('name', 'brand', 'mrp', 'price', 'pieces_per_bag', 'bag_rate',
+                    'stock', 'is_active')
     list_filter = ('brand', 'is_active')
     search_fields = ('name', 'brand__name')
-    list_editable = ('is_active',)
+    list_editable = ('stock', 'is_active')      # ഒരു തവണ മാത്രം
     inlines = [SchemeInline]

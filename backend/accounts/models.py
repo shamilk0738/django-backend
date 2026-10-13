@@ -31,6 +31,7 @@ class Route(models.Model):
 
 
 class SalesmanProfile(models.Model):
+    photo = models.ImageField(upload_to='salesman_photos/', blank=True, null=True)
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='salesman_profile')
     employee_code = models.CharField(max_length=20, unique=True, null=True, blank=True)
     route = models.ForeignKey(Route, on_delete=models.SET_NULL, null=True, blank=True,
@@ -54,3 +55,4 @@ class Attendance(models.Model):
 
     def __str__(self):
         return f'{self.salesman} - {self.date}'
+        
