@@ -6,7 +6,7 @@ from .models import Brand, Product, Scheme
 class ProductInline(admin.TabularInline):
     model = Product
     extra = 1
-    fields = ('name', 'mrp', 'price', 'pieces_per_bag', 'bag_price', 'stock', 'is_active')
+    fields = ('name', 'mrp', 'price', 'pieces_per_bag', 'bag_piece_rate', 'stock', 'is_active')
     show_change_link = True      # scheme ചേർക്കാൻ product page തുറക്കാം
 
 
