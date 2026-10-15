@@ -1,0 +1,67 @@
+{% extends "admin/base_site.html" %}
+{% load static %}
+
+{% block extrastyle %}
+  {{ block.super }}
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{% static 'css/custom_admin.css' %}">
+{% endblock %}
+
+{% block nav-sidebar %}
+{% if user.is_authenticated and user.is_staff %}
+<nav class="dz-sidebar">
+  <a class="dz-logo" href="{% url 'admin:index' %}">
+    <span class="dz-logo-mark">D</span>
+    <span class="dz-logo-text">Distributor</span>
+  </a>
+
+  {% url 'admin:index' as u_dash %}
+  <a class="dz-link {% if request.path == u_dash %}active{% endif %}" href="{{ u_dash }}">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+    Dashboard
+  </a>
+
+  <div class="dz-section">Sales</div>
+  <a class="dz-link {% if '/orders/order/' in request.path %}active{% endif %}" href="{% url 'admin:orders_order_changelist' %}">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+    Orders
+  </a>
+  <a class="dz-link {% if '/shops/shop/' in request.path %}active{% endif %}" href="{% url 'admin:shops_shop_changelist' %}">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l1-5h16l1 5"/><path d="M4 9v11h16V9"/><path d="M9 20v-6h6v6"/></svg>
+    Shops
+  </a>
+
+  <div class="dz-section">Catalog</div>
+  <a class="dz-link {% if '/catalog/brand/' in request.path %}active{% endif %}" href="{% url 'admin:catalog_brand_changelist' %}">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
+    Brands
+  </a>
+  <a class="dz-link {% if '/catalog/product/' in request.path %}active{% endif %}" href="{% url 'admin:catalog_product_changelist' %}">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+    Products
+  </a>
+
+  <div class="dz-section">Team</div>
+  <a class="dz-link {% if '/accounts/user/' in request.path %}active{% endif %}" href="{% url 'admin:accounts_user_changelist' %}">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+    Users &amp; Salesmen
+  </a>
+  <a class="dz-link {% if '/accounts/attendance/' in request.path %}active{% endif %}" href="{% url 'admin:accounts_attendance_changelist' %}">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+    Attendance
+  </a>
+  <a class="dz-link {% if '/accounts/route/' in request.path %}active{% endif %}" href="{% url 'admin:accounts_route_changelist' %}">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+    Routes
+  </a>
+
+  <div class="dz-section">Settings</div>
+  <a class="dz-link {% if '/auth/group/' in request.path %}active{% endif %}" href="{% url 'admin:auth_group_changelist' %}">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+    Groups
+  </a>
+</nav>
+{% endif %}
+{% endblock %}

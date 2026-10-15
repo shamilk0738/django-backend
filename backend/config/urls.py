@@ -1,32 +1,32 @@
-"""
-URL configuration for config project.
-
-The `urlpatterns` list routes URLs to views. For more information please see:
-    https://docs.djangoproject.com/en/6.1/topics/http/urls/
-Examples:
-Function views
-    1. Add an import:  from my_app import views
-    2. Add a URL to urlpatterns:  path('', views.home, name='home')
-Class-based views
-    1. Add an import:  from other_app.views import Home
-    2. Add a URL to urlpatterns:  path('', Home.as_view(), name='home')
-Including another URLconf
-    1. Import the include() function: from django.urls import include, path
-    2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
-"""
 from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import include, path
+from django.views.generic import RedirectView
 from rest_framework_simplejwt.views import TokenRefreshView
 
 from accounts.views import LoginView
+from config.dashboard import dashboard_data
 
 admin.site.site_header = 'Distributor Admin'
 admin.site.site_title = 'Distributor Admin'
-admin.site.index_title = 'Welcome to Distributor Management'
+admin.site.index_title = 'Dashboard'
+
+# Admin home page-ൽ dashboard data ചേർക്കുന്നു
+# (admin.site.urls ഉപയോഗിക്കുന്നതിന് മുൻപ് തന്നെ ഇത് വരണം)
+_original_index = admin.site.index
+
+
+def _dashboard_index(request, extra_context=None):
+    extra_context = extra_context or {}
+    extra_context['dash'] = dashboard_data()
+    return _original_index(request, extra_context)
+
+
+admin.site.index = _dashboard_index
 
 urlpatterns = [
+    path('', RedirectView.as_view(url='/admin/')),
     path('admin/', admin.site.urls),
     path('api/auth/login/', LoginView.as_view()),
     path('api/auth/refresh/', TokenRefreshView.as_view()),

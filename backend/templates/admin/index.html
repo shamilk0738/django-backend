@@ -1,0 +1,175 @@
+{% extends "admin/base_site.html" %}
+{% load static %}
+
+{% block title %}Dashboard | {{ site_title|default:"Distributor Admin" }}{% endblock %}
+{% block coltype %}{% endblock %}
+{% block breadcrumbs %}{% endblock %}
+{% block content_title %}{% endblock %}
+
+{% block content %}
+{% with d=dash %}
+
+<div class="dz-page-head">
+  <div>
+    <h1>Hi, {{ request.user.first_name|default:request.user.username }} 👋</h1>
+    <p>{{ d.today|date:"l, d F Y" }} · Here's your distribution at a glance</p>
+  </div>
+  <div class="dz-actions">
+    <a class="dz-btn" href="{% url 'admin:shops_shop_add' %}">+ Shop</a>
+    <a class="dz-btn" href="{% url 'admin:catalog_brand_add' %}">+ Brand</a>
+    <a class="dz-btn" href="{% url 'admin:accounts_user_add' %}">+ Salesman / User</a>
+  </div>
+</div>
+
+<!-- ============ Stat cards ============ -->
+<div class="dz-grid-4">
+  <div class="dz-card">
+    <div class="dz-stat-label">Today's sales</div>
+    <div class="dz-stat-value">₹{{ d.today_sales }}</div>
+    <div class="dz-stat-label">{{ d.today_orders }} order{{ d.today_orders|pluralize }} today</div>
+  </div>
+
+  <div class="dz-card">
+    <div class="dz-stat-label">
+      This month's sales
+      {% if d.growth is not None %}
+        <span class="dz-badge {% if d.growth >= 0 %}dz-up{% else %}dz-down{% endif %}">{% if d.growth >= 0 %}▲{% else %}▼{% endif %} {{ d.growth }}%</span>
+      {% endif %}
+    </div>
+    <div class="dz-stat-value">₹{{ d.month_sales }}</div>
+    <div class="dz-progress"><span style="width: {{ d.target_pct }}%"></span></div>
+    <div class="dz-stat-label dz-mt">{{ d.target_pct }}% of ₹{{ d.target_total }} target</div>
+  </div>
+
+  <div class="dz-card">
+    <div class="dz-stat-label">Orders this month</div>
+    <div class="dz-stat-value">{{ d.month_orders }}</div>
+    <div class="dz-stat-label"><a href="{% url 'admin:orders_order_changelist' %}?status__exact=pending">{{ d.pending }} pending</a> · {{ d.active_shops }} active shops</div>
+  </div>
+
+  <div class="dz-card">
+    <div class="dz-stat-label">Salesmen present today</div>
+    <div class="dz-stat-value">{{ d.present }} <small>/ {{ d.salesmen }}</small></div>
+    <div class="dz-progress"><span style="width: {{ d.present_pct }}%"></span></div>
+  </div>
+</div>
+
+<!-- ============ Chart + Top salesmen ============ -->
+<div class="dz-grid-2">
+  <div class="dz-card">
+    <h3 class="dz-card-title">Sales – last 30 days</h3>
+    <p class="dz-card-sub">Cancelled orders are excluded</p>
+    <div class="dz-chart-box"><canvas id="sales-chart"></canvas></div>
+  </div>
+
+  <div class="dz-card">
+    <h3 class="dz-card-title">Top salesmen</h3>
+    <p class="dz-card-sub">This month's performance</p>
+    {% for s in d.top_salesmen %}
+      <div class="dz-rank">
+        <div class="dz-avatar">{{ s.initial }}</div>
+        <div class="dz-rank-body">
+          <div class="dz-rank-top"><strong>{{ s.name }}</strong><span>₹{{ s.total }}</span></div>
+          <div class="dz-progress"><span style="width: {{ s.bar }}%"></span></div>
+          <small>{{ s.orders }} order{{ s.orders|pluralize }}{% if s.target_pct is not None %} · {{ s.target_pct }}% of target{% endif %}</small>
+        </div>
+      </div>
+    {% empty %}
+      <p class="dz-empty">No orders this month yet.</p>
+    {% endfor %}
+  </div>
+</div>
+
+<!-- ============ Recent orders + Popular products ============ -->
+<div class="dz-grid-2">
+  <div class="dz-card">
+    <h3 class="dz-card-title">Recent orders</h3>
+    <table class="dz-table">
+      <thead><tr><th>Order</th><th>Shop</th><th>Salesman</th><th>Amount</th><th>Status</th></tr></thead>
+      <tbody>
+      {% for o in d.recent_orders %}
+        <tr>
+          <td><a href="{% url 'admin:orders_order_change' o.pk %}">#{{ o.pk }}</a><br><small>{{ o.created_at|date:"d M, h:i A" }}</small></td>
+          <td>{{ o.shop.name }}</td>
+          <td>{{ o.salesman_display }}</td>
+          <td><strong>₹{{ o.amount_display }}</strong></td>
+          <td><span class="dz-status dz-st-{{ o.status }}">{{ o.get_status_display }}</span></td>
+        </tr>
+      {% empty %}
+        <tr><td colspan="5" class="dz-empty">No orders yet.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <div class="dz-card">
+    <h3 class="dz-card-title">Popular products</h3>
+    <p class="dz-card-sub">Best sellers this month</p>
+    {% for p in d.popular %}
+      <div class="dz-prod">
+        <div>
+          <strong>{{ p.name }}</strong><br>
+          <small>{{ p.brand }} · {{ p.qty }} sold</small>
+        </div>
+        <strong>₹{{ p.amount }}</strong>
+      </div>
+    {% empty %}
+      <p class="dz-empty">No data yet.</p>
+    {% endfor %}
+  </div>
+</div>
+
+<!-- ============ Attendance ============ -->
+<div class="dz-card">
+  <h3 class="dz-card-title">Today's attendance</h3>
+  <p class="dz-card-sub">Recorded automatically when a salesman logs in to the app</p>
+  <div class="dz-chips">
+    {% for a in d.attendance_today %}
+      <div class="dz-chip">
+        <div class="dz-avatar">{{ a.initial }}</div>
+        <div><strong>{{ a.name }}</strong><br><small>{{ a.time|date:"h:i A" }}</small></div>
+      </div>
+    {% empty %}
+      <p class="dz-empty">No one has logged in today.</p>
+    {% endfor %}
+  </div>
+</div>
+
+{{ d.chart|json_script:"sales-chart-data" }}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script>
+(function () {
+  var el = document.getElementById('sales-chart');
+  if (!el || typeof Chart === 'undefined') return;
+  var data = JSON.parse(document.getElementById('sales-chart-data').textContent);
+  var ctx = el.getContext('2d');
+  var g = ctx.createLinearGradient(0, 0, 0, 280);
+  g.addColorStop(0, 'rgba(47,109,246,.35)');
+  g.addColorStop(1, 'rgba(47,109,246,0)');
+  new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: data.labels,
+      datasets: [{
+        label: 'Sales (₹)', data: data.values, borderColor: '#2f6df6',
+        backgroundColor: g, fill: true, tension: 0.4, borderWidth: 2.5,
+        pointRadius: 0, pointHoverRadius: 5
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { grid: { display: false }, ticks: { maxTicksLimit: 8 } },
+        y: {
+          beginAtZero: true, grid: { color: '#eef0f4' },
+          ticks: { callback: function (v) { return v >= 1000 ? '₹' + (v / 1000) + 'k' : '₹' + v; } }
+        }
+      }
+    }
+  });
+})();
+</script>
+
+{% endwith %}
+{% endblock %}
