@@ -1,0 +1,54 @@
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script>
+(function () {
+  var PAL = ['#4f46e5', '#0ea5e9', '#10b981', '#f59e0b', '#ef4444',
+             '#8b5cf6', '#14b8a6', '#f97316', '#84cc16', '#ec4899'];
+  var root = document.querySelector('.rpt');
+  if (!window.Chart || !root) return;
+  Chart.defaults.color = getComputedStyle(root).color;
+  Chart.defaults.borderColor = 'rgba(128,128,128,.2)';
+  Chart.defaults.font.family = getComputedStyle(document.body).fontFamily;
+  var compact = new Intl.NumberFormat('en-IN', { notation: 'compact', maximumFractionDigits: 1 });
+  var full = new Intl.NumberFormat('en-IN', { maximumFractionDigits: 2 });
+
+  // cfg: type (bar|line|doughnut), labels, values, label, horizontal, money
+  window.rptChart = function (id, cfg) {
+    var el = document.getElementById(id);
+    if (!el) return;
+    if (!cfg.labels.length) {
+      el.parentNode.innerHTML = '<div class="empty">No data</div>';
+      return;
+    }
+    var pie = cfg.type === 'doughnut', line = cfg.type === 'line', pre = cfg.money ? '₹' : '';
+    var valueAxis = { beginAtZero: true, ticks: { callback: function (v) { return pre + compact.format(v); } } };
+    var catAxis = { grid: { display: false } };
+    new Chart(el, {
+      type: cfg.type,
+      data: {
+        labels: cfg.labels,
+        datasets: [{
+          label: cfg.label || '',
+          data: cfg.values,
+          backgroundColor: pie ? PAL : (line ? 'rgba(79,70,229,.15)' : PAL[0]),
+          borderColor: line ? PAL[0] : undefined,
+          borderWidth: line ? 2 : 0,
+          fill: line, tension: .3, pointRadius: line ? 2 : 0,
+          borderRadius: cfg.type === 'bar' ? 4 : 0
+        }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        indexAxis: cfg.horizontal ? 'y' : 'x',
+        plugins: {
+          legend: { display: pie, position: 'bottom' },
+          tooltip: { callbacks: { label: function (c) {
+            var v = pie ? c.parsed : (cfg.horizontal ? c.parsed.x : c.parsed.y);
+            return ' ' + pre + full.format(v);
+          } } }
+        },
+        scales: pie ? {} : (cfg.horizontal ? { x: valueAxis, y: catAxis } : { x: catAxis, y: valueAxis })
+      }
+    });
+  };
+})();
+</script>

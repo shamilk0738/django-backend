@@ -1,0 +1,105 @@
+{% extends "admin/base_site.html" %}
+{% block title %}Monthly Report{% endblock %}
+{% block breadcrumbs %}{% endblock %}
+
+{% block content %}
+{% include "admin/reports/_style.html" %}
+<div class="rpt dz-report">
+  <h1>Monthly Report</h1>
+  <p class="sub">{{ month_value }}</p>
+
+  <form method="get" class="filters">
+    <input type="month" name="month" value="{{ month_value }}">
+    <button type="submit" class="btn">View</button>
+    <a href="{% url 'reports:monthly' %}" class="btn ghost">This month</a>
+  </form>
+
+  <div class="kpis">
+    <div class="kpi"><div class="label">Total sales</div><div class="value">₹{{ total|floatformat:"2g" }}</div></div>
+    <div class="kpi"><div class="label">Orders</div><div class="value">{{ count }}</div></div>
+  </div>
+
+  <div class="chartrow">
+    <div class="chartcard"><h2>Sales by day</h2><div class="chartbox"><canvas id="c-day"></canvas></div></div>
+  </div>
+  <div class="grid2 chartrow">
+    <div class="chartcard"><h2>Last 12 months</h2><div class="chartbox"><canvas id="c-months"></canvas></div></div>
+    <div class="chartcard"><h2>Top products by amount</h2><div class="chartbox"><canvas id="c-product"></canvas></div></div>
+  </div>
+  <div class="chartrow">
+    <div class="chartcard"><h2>Sales by salesman</h2><div class="chartbox"><canvas id="c-salesman"></canvas></div></div>
+  </div>
+
+  <h2>Day by day</h2>
+  <div class="tablewrap"><table>
+    <thead><tr><th>Date</th><th class="num">Orders</th><th class="num">Amount</th></tr></thead>
+    <tbody>
+    {% for r in by_day %}
+      <tr>
+        <td><a href="{% url 'reports:daily' %}?date={{ r.d|date:'Y-m-d' }}">{{ r.d|date:"d M" }}</a></td>
+        <td class="num">{{ r.count }}</td><td class="num">₹{{ r.total|floatformat:"2g" }}</td>
+      </tr>
+    {% empty %}<tr><td colspan="3" class="empty">No orders</td></tr>{% endfor %}
+    </tbody>
+  </table></div>
+
+  <div class="grid2">
+    <div>
+      <h2>Salesman-wise</h2>
+      <div class="tablewrap"><table>
+        <thead><tr><th>Salesman</th><th class="num">Orders</th><th class="num">Amount</th></tr></thead>
+        <tbody>
+        {% for r in by_salesman %}
+          <tr><td>{{ r.salesman__username }}</td><td class="num">{{ r.count }}</td><td class="num">₹{{ r.total|floatformat:"2g" }}</td></tr>
+        {% empty %}<tr><td colspan="3" class="empty">No orders</td></tr>{% endfor %}
+        </tbody>
+      </table></div>
+    </div>
+    <div>
+      <h2>Shop-wise</h2>
+      <div class="tablewrap"><table>
+        <thead><tr><th>Shop</th><th class="num">Orders</th><th class="num">Amount</th></tr></thead>
+        <tbody>
+        {% for r in by_shop %}
+          <tr><td>{{ r.shop__name }}</td><td class="num">{{ r.count }}</td><td class="num">₹{{ r.total|floatformat:"2g" }}</td></tr>
+        {% empty %}<tr><td colspan="3" class="empty">No orders</td></tr>{% endfor %}
+        </tbody>
+      </table></div>
+    </div>
+  </div>
+
+  <h2>Product-wise (pieces)</h2>
+  <div class="tablewrap"><table>
+    <thead><tr><th>Product</th><th class="num">Qty</th><th class="num">Free</th><th class="num">Amount</th></tr></thead>
+    <tbody>
+    {% for r in by_product %}
+      <tr><td>{{ r.product__name }}</td><td class="num">{{ r.qty }}</td><td class="num">{{ r.free }}</td><td class="num">₹{{ r.amount|floatformat:"2g" }}</td></tr>
+    {% empty %}<tr><td colspan="4" class="empty">No items</td></tr>{% endfor %}
+    </tbody>
+  </table></div>
+
+  <h2>All months</h2>
+  <div class="tablewrap"><table>
+    <thead><tr><th>Month</th><th class="num">Orders</th><th class="num">Amount</th></tr></thead>
+    <tbody>
+    {% for r in months %}
+      <tr>
+        <td><a href="?month={{ r.m|date:'Y-m' }}">{{ r.m|date:"M Y" }}</a></td>
+        <td class="num">{{ r.count }}</td><td class="num">₹{{ r.total|floatformat:"2g" }}</td>
+      </tr>
+    {% empty %}<tr><td colspan="3" class="empty">No data yet</td></tr>{% endfor %}
+    </tbody>
+  </table></div>
+  {{ charts|json_script:"charts-data" }}
+</div>
+{% include "admin/reports/_charts.html" %}
+<script>
+(function () {
+  var C = JSON.parse(document.getElementById("charts-data").textContent);
+  rptChart("c-day", {type: "line", labels: C.day.labels, values: C.day.values, label: "Sales", money: true});
+  rptChart("c-months", {type: "bar", labels: C.months.labels, values: C.months.values, label: "Sales", money: true});
+  rptChart("c-product", {type: "bar", horizontal: true, labels: C.product.labels, values: C.product.values, label: "Amount", money: true});
+  rptChart("c-salesman", {type: "bar", labels: C.salesman.labels, values: C.salesman.values, label: "Sales", money: true});
+})();
+</script>
+{% endblock %}

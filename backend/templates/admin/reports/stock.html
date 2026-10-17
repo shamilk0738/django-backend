@@ -1,0 +1,64 @@
+{% extends "admin/base_site.html" %}
+{% block title %}Stock Report{% endblock %}
+{% block breadcrumbs %}{% endblock %}
+
+{% block content %}
+{% include "admin/reports/_style.html" %}
+<div class="rpt dz-report">
+  <h1>Stock Report</h1>
+  <p class="sub">Active products only</p>
+
+  <form method="get" class="filters">
+    <input name="q" value="{{ q }}" placeholder="Product search">
+    <select name="brand">
+      <option value="">All brands</option>
+      {% for b in brands %}
+      <option value="{{ b.id }}" {% if b.id|stringformat:"s" == brand %}selected{% endif %}>{{ b.name }}</option>
+      {% endfor %}
+    </select>
+    <input name="low" type="number" min="0" value="{{ low }}" placeholder="Low stock (pcs ≤)">
+    <button type="submit" class="btn">Filter</button>
+    <a href="{% url 'reports:stock' %}" class="btn ghost">Reset</a>
+  </form>
+
+  <div class="kpis">
+    <div class="kpi"><div class="label">Stock value</div><div class="value">₹{{ total_value|floatformat:"2g" }}</div></div>
+    <div class="kpi"><div class="label">Total pieces</div><div class="value">{{ total_pieces }}</div></div>
+  </div>
+
+  <div class="grid2 chartrow">
+    <div class="chartcard"><h2>Stock value by brand</h2><div class="chartbox"><canvas id="c-brand"></canvas></div></div>
+    <div class="chartcard"><h2>Top products by stock value</h2><div class="chartbox"><canvas id="c-top"></canvas></div></div>
+  </div>
+
+  <h2>Products</h2>
+  <div class="tablewrap"><table>
+    <thead><tr>
+      <th>Brand</th><th>Product</th>
+      <th class="num">Bags</th><th class="num">Loose pcs</th><th class="num">Total pcs</th><th class="num">Value</th>
+    </tr></thead>
+    <tbody>
+    {% for r in rows %}
+      <tr>
+        <td>{{ r.p.brand.name }}</td><td>{{ r.p.name }}</td>
+        <td class="num">{{ r.bags }}</td><td class="num">{{ r.loose }}</td>
+        <td class="num {% if r.p.stock <= 10 %}low{% endif %}">{{ r.p.stock }}</td>
+        <td class="num">₹{{ r.value|floatformat:"2g" }}</td>
+      </tr>
+    {% empty %}<tr><td colspan="6" class="empty">No products</td></tr>{% endfor %}
+    </tbody>
+    <tfoot><tr>
+      <td colspan="4">Total</td><td class="num">{{ total_pieces }}</td><td class="num">₹{{ total_value|floatformat:"2g" }}</td>
+    </tr></tfoot>
+  </table></div>
+  {{ charts|json_script:"charts-data" }}
+</div>
+{% include "admin/reports/_charts.html" %}
+<script>
+(function () {
+  var C = JSON.parse(document.getElementById("charts-data").textContent);
+  rptChart("c-brand", {type: "bar", labels: C.brand.labels, values: C.brand.values, label: "Value", money: true});
+  rptChart("c-top", {type: "bar", horizontal: true, labels: C.top.labels, values: C.top.values, label: "Value", money: true});
+})();
+</script>
+{% endblock %}

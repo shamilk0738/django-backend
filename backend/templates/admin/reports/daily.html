@@ -1,0 +1,99 @@
+{% extends "admin/base_site.html" %}
+{% block title %}Daily Report{% endblock %}
+{% block breadcrumbs %}{% endblock %}
+
+{% block content %}
+{% include "admin/reports/_style.html" %}
+<div class="rpt dz-report">
+  <h1>Daily Report</h1>
+  <p class="sub">{{ day|date:"d M Y" }}{% if is_today %} (Today){% endif %}</p>
+
+  <form method="get" class="filters">
+    <input type="date" name="date" value="{{ day|date:'Y-m-d' }}">
+    <button type="submit" class="btn">View</button>
+    <a href="{% url 'reports:daily' %}" class="btn ghost">Today</a>
+  </form>
+
+  <div class="kpis">
+    <div class="kpi"><div class="label">Total sales</div><div class="value">₹{{ total|floatformat:"2g" }}</div></div>
+    <div class="kpi"><div class="label">Orders</div><div class="value">{{ count }}</div></div>
+  </div>
+  <div class="chips">
+    {% for s in status_counts %}<span class="chip {{ s.status|lower }}">{{ s.status|title }}: {{ s.c }}</span>{% endfor %}
+  </div>
+
+  <div class="grid2 chartrow">
+    <div class="chartcard"><h2>Sales by shop</h2><div class="chartbox"><canvas id="c-shop"></canvas></div></div>
+    <div class="chartcard"><h2>Top products by amount</h2><div class="chartbox"><canvas id="c-product"></canvas></div></div>
+  </div>
+  <div class="grid2 chartrow">
+    <div class="chartcard"><h2>Sales by salesman</h2><div class="chartbox"><canvas id="c-salesman"></canvas></div></div>
+    <div class="chartcard"><h2>Orders by status</h2><div class="chartbox"><canvas id="c-status"></canvas></div></div>
+  </div>
+
+  <div class="grid2">
+    <div>
+      <h2>Salesman-wise</h2>
+      <div class="tablewrap"><table>
+        <thead><tr><th>Salesman</th><th class="num">Orders</th><th class="num">Amount</th></tr></thead>
+        <tbody>
+        {% for r in by_salesman %}
+          <tr><td>{{ r.salesman__username }}</td><td class="num">{{ r.count }}</td><td class="num">₹{{ r.total|floatformat:"2g" }}</td></tr>
+        {% empty %}<tr><td colspan="3" class="empty">No orders</td></tr>{% endfor %}
+        </tbody>
+      </table></div>
+    </div>
+    <div>
+      <h2>Shop-wise</h2>
+      <div class="tablewrap"><table>
+        <thead><tr><th>Shop</th><th class="num">Orders</th><th class="num">Amount</th></tr></thead>
+        <tbody>
+        {% for r in by_shop %}
+          <tr><td>{{ r.shop__name }}</td><td class="num">{{ r.count }}</td><td class="num">₹{{ r.total|floatformat:"2g" }}</td></tr>
+        {% empty %}<tr><td colspan="3" class="empty">No orders</td></tr>{% endfor %}
+        </tbody>
+      </table></div>
+    </div>
+  </div>
+
+  <h2>Product-wise (pieces)</h2>
+  <div class="tablewrap"><table>
+    <thead><tr><th>Brand</th><th>Product</th><th class="num">Qty (pcs)</th><th class="num">Free (pcs)</th><th class="num">Amount</th></tr></thead>
+    <tbody>
+    {% for r in by_product %}
+      <tr>
+        <td>{{ r.product__brand__name }}</td><td>{{ r.product__name }}</td>
+        <td class="num">{{ r.qty }}</td><td class="num">{{ r.free }}</td><td class="num">₹{{ r.amount|floatformat:"2g" }}</td>
+      </tr>
+    {% empty %}<tr><td colspan="5" class="empty">No items</td></tr>{% endfor %}
+    </tbody>
+  </table></div>
+
+  <h2>Orders</h2>
+  <div class="tablewrap"><table>
+    <thead><tr><th>#</th><th>Time</th><th>Shop</th><th>Salesman</th><th>Status</th><th class="num">Amount</th></tr></thead>
+    <tbody>
+    {% for o in orders %}
+      <tr>
+        <td><a href="{% url 'admin:orders_order_change' o.pk %}">{{ o.pk }}</a></td>
+        <td>{{ o.created_at|time:"H:i" }}</td><td>{{ o.shop.name }}</td>
+        <td>{{ o.salesman.username }}</td>
+        <td><span class="chip {{ o.status|lower }}">{{ o.get_status_display }}</span></td>
+        <td class="num">₹{{ o.total_amount|floatformat:"2g" }}</td>
+      </tr>
+    {% empty %}<tr><td colspan="6" class="empty">No orders</td></tr>{% endfor %}
+    </tbody>
+  </table></div>
+  {{ charts|json_script:"charts-data" }}
+</div>
+{% include "admin/reports/_charts.html" %}
+<script>
+(function () {
+  var C = JSON.parse(document.getElementById("charts-data").textContent);
+  rptChart("c-shop", {type: "bar", labels: C.shop.labels, values: C.shop.values, label: "Sales", money: true});
+  rptChart("c-product", {type: "bar", horizontal: true, labels: C.product.labels, values: C.product.values, label: "Amount", money: true});
+  rptChart("c-salesman", {type: "bar", labels: C.salesman.labels, values: C.salesman.values, label: "Sales", money: true});
+  rptChart("c-status", {type: "doughnut", labels: C.status.labels, values: C.status.values});
+})();
+</script>
+{% endblock %}
