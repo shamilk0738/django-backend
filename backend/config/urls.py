@@ -7,6 +7,7 @@ from rest_framework_simplejwt.views import TokenRefreshView
 
 from accounts.views import LoginView
 from config.dashboard import dashboard_data
+from reports.api import MySummaryView
 
 admin.site.site_header = 'Distributor Admin'
 admin.site.site_title = 'Distributor Admin'
@@ -30,6 +31,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/auth/login/', LoginView.as_view()),
     path('api/auth/refresh/', TokenRefreshView.as_view()),
+    path('api/reports/my-summary/', MySummaryView.as_view()),   # salesman സ്വന്തം report
     path('api/', include('accounts.urls')),
     path('api/', include('shops.urls')),
     path('api/', include('catalog.urls')),
