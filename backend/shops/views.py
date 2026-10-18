@@ -14,7 +14,7 @@ class ShopViewSet(viewsets.ModelViewSet):
         user = self.request.user
         if not user.is_admin_role:
             if user.role == 'salesman':
-                qs = qs.filter(salesman=user)       # അവന്റെ shops മാത്രം
+                qs = qs.filter(salesman=user)      
             else:
                 qs = qs.filter(user=user)
         q = self.request.query_params.get('q')

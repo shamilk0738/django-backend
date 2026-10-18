@@ -7,7 +7,7 @@ class ProductInline(admin.TabularInline):
     model = Product
     extra = 1
     fields = ('name', 'mrp', 'price', 'pieces_per_bag', 'bag_piece_rate', 'stock', 'is_active')
-    show_change_link = True      # scheme ചേർക്കാൻ product page തുറക്കാം
+    show_change_link = True      
 
 
 class SchemeInline(admin.TabularInline):
@@ -32,5 +32,5 @@ class ProductAdmin(admin.ModelAdmin):
                     'stock', 'is_active')
     list_filter = ('brand', 'is_active')
     search_fields = ('name', 'brand__name')
-    list_editable = ('stock', 'is_active')      # ഒരു തവണ മാത്രം
+    list_editable = ('stock', 'is_active')      
     inlines = [SchemeInline]

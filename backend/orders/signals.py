@@ -15,7 +15,7 @@ def mark_attendance_on_order(sender, instance, created, **kwargs):
     if salesman.role != User.Role.SALESMAN:
         return
 
-    # One attendance per salesman per day; later orders change nothing
+    
     Attendance.objects.get_or_create(
         salesman=salesman,
         date=timezone.localdate(),

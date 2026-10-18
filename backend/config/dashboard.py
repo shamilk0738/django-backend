@@ -36,16 +36,16 @@ def dashboard_data():
     month_start = today.replace(day=1)
     valid = Order.objects.exclude(status=Order.Status.CANCELLED)
 
-    # ---- today -------------------------------------------------------
+    
     today_agg = valid.filter(created_at__date=today).aggregate(
         total=Sum('total_amount'), cnt=Count('id'))
 
-    # ---- this month --------------------------------------------------
+    
     month_qs = valid.filter(created_at__date__gte=month_start)
     month_agg = month_qs.aggregate(total=Sum('total_amount'), cnt=Count('id'))
     month_sales = month_agg['total'] or 0
 
-    # same number of days of last month, for the growth badge
+    
     prev_start = (month_start - timedelta(days=1)).replace(day=1)
     prev_end = min(prev_start + timedelta(days=today.day - 1),
                    month_start - timedelta(days=1))
@@ -56,18 +56,18 @@ def dashboard_data():
     if prev_sales:
         growth = round((float(month_sales) - float(prev_sales)) / float(prev_sales) * 100, 1)
 
-    # ---- targets -----------------------------------------------------
+    
     targets = dict(SalesmanProfile.objects.filter(user__is_active=True)
                    .values_list('user_id', 'monthly_target'))
     target_total = sum(float(t) for t in targets.values())
     target_pct = min(int(float(month_sales) / target_total * 100), 100) if target_total else 0
 
-    # ---- people ------------------------------------------------------
+    
     salesmen_count = User.objects.filter(role=User.Role.SALESMAN, is_active=True).count()
     present = Attendance.objects.filter(date=today).count()
     present_pct = min(int(present / salesmen_count * 100), 100) if salesmen_count else 0
 
-    # ---- chart: last 30 days ----------------------------------------
+    
     start = today - timedelta(days=29)
     rows = (valid.filter(created_at__date__gte=start)
             .annotate(d=TruncDate('created_at'))
@@ -79,7 +79,7 @@ def dashboard_data():
         labels.append(day.strftime('%d %b'))
         values.append(by_day.get(day, 0))
 
-    # ---- top salesmen (this month) ----------------------------------
+    
     top_rows = (month_qs.values('salesman', 'salesman__first_name',
                                 'salesman__last_name', 'salesman__username')
                 .annotate(total=Sum('total_amount'), cnt=Count('id'))
@@ -102,7 +102,7 @@ def dashboard_data():
             else (int(total / top_max * 100) if top_max else 0),
         })
 
-    # ---- popular products (this month) ------------------------------
+    
     prod_rows = (OrderItem.objects
                  .exclude(order__status=Order.Status.CANCELLED)
                  .filter(order__created_at__date__gte=month_start)
@@ -116,7 +116,7 @@ def dashboard_data():
         'amount': inr(r['amount']),
     } for r in prod_rows]
 
-    # ---- recent orders / attendance ---------------------------------
+    
     recent_orders = list(Order.objects.select_related('shop', 'salesman')
                          .order_by('-created_at')[:8])
     for o in recent_orders:

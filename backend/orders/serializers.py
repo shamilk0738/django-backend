@@ -87,12 +87,12 @@ class OrderStatusSerializer(serializers.ModelSerializer):
 
         with transaction.atomic():
             if will_be_cancelled and not was_cancelled:
-                # Cancel ചെയ്യുന്നു -> stock തിരിച്ച് ചേർക്കുക
+                
                 for item in order.items.select_related('product'):
                     give_back_stock(item.product, item.unit,
                                     item.quantity, item.free_quantity)
             elif was_cancelled and not will_be_cancelled:
-                # Cancelled order വീണ്ടും തുറക്കുന്നു -> stock വീണ്ടും കുറയ്ക്കുക
+                
                 for item in order.items.select_related('product'):
                     take_stock(item.product, item.unit,
                                item.quantity, item.free_quantity)
@@ -101,7 +101,7 @@ class OrderStatusSerializer(serializers.ModelSerializer):
         return order
 
 
-# ---------- Order edit ----------
+
 
 class EditItemSerializer(serializers.Serializer):
     product = serializers.PrimaryKeyRelatedField(
@@ -120,7 +120,7 @@ class OrderEditSerializer(serializers.Serializer):
             if 'notes' in validated_data:
                 order.notes = validated_data['notes']
 
-            # പഴയ items-ന്റെ stock ആദ്യം തിരിച്ച് ചേർക്കുക
+            
             for old in order.items.select_related('product'):
                 give_back_stock(old.product, old.unit, old.quantity, old.free_quantity)
             order.items.all().delete()

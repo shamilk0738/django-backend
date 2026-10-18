@@ -4,7 +4,7 @@ from django.utils.safestring import mark_safe
 
 from .models import Order
 
-# Hides the "Bill" label and stretches the bill across the full page width
+
 BILL_CSS = mark_safe(
     '<style>'
     '.field-bill_details label{display:none !important}'
@@ -101,7 +101,7 @@ class OrderAdmin(admin.ModelAdmin):
 
     @admin.action(description='UNDO last status (Delivered > Confirmed > Pending)')
     def undo_status(self, request, queryset):
-        # Order matters: first confirmed→pending, then delivered→confirmed
+        
         a = queryset.filter(status='confirmed').update(status='pending')
         b = queryset.filter(status='delivered').update(status='confirmed')
         self.message_user(request, f'{a + b} order(s) moved back one step.',

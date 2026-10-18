@@ -13,8 +13,8 @@ admin.site.site_header = 'Distributor Admin'
 admin.site.site_title = 'Distributor Admin'
 admin.site.index_title = 'Dashboard'
 
-# Admin home page-ൽ dashboard data ചേർക്കുന്നു
-# (admin.site.urls ഉപയോഗിക്കുന്നതിന് മുൻപ് തന്നെ ഇത് വരണം)
+
+
 _original_index = admin.site.index
 
 
@@ -31,7 +31,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/auth/login/', LoginView.as_view()),
     path('api/auth/refresh/', TokenRefreshView.as_view()),
-    path('api/reports/my-summary/', MySummaryView.as_view()),   # salesman സ്വന്തം report
+    path('api/reports/my-summary/', MySummaryView.as_view()),   
     path('api/', include('accounts.urls')),
     path('api/', include('shops.urls')),
     path('api/', include('catalog.urls')),
