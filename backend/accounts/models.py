@@ -45,7 +45,7 @@ class SalesmanProfile(models.Model):
 
 
 class Attendance(models.Model):
-    salesman = models.ForeignKey(User, on_delete=models.CASCADE, related_name='attendances')
+    salesman = models.ForeignKey(User, on_delete=models.CASCADE, related_name='nces')
     date = models.DateField()
     login_time = models.DateTimeField(auto_now_add=True)
 

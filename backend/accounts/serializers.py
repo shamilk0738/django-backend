@@ -1,4 +1,3 @@
-from django.utils import timezone
 from rest_framework import serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
@@ -6,15 +5,11 @@ from .models import Attendance, User
 
 
 class LoginSerializer(TokenObtainPairSerializer):
-    """Login ചെയ്യുമ്പോൾ salesman ആണെങ്കിൽ attendance ഓട്ടോമാറ്റിക്."""
+    """Login only. Attendance is NOT marked here; it is marked when an order is created."""
 
     def validate(self, attrs):
         data = super().validate(attrs)
         user = self.user
-        if user.role == User.Role.SALESMAN:
-            Attendance.objects.get_or_create(
-                salesman=user, date=timezone.localdate()
-            )
         data['user'] = {
             'id': user.id,
             'username': user.username,
